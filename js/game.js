@@ -17,34 +17,45 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
+var style = { font: "bold 32px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+var text, pointer, keyboard;
 
 function preload() {
     this.load.setBaseURL('http://labs.phaser.io');
 
     this.load.image('sky', 'assets/skies/space3.png');
-    this.load.image('logo', 'assets/sprites/phaser3-logo.png');
-    this.load.image('red', 'assets/particles/red.png');
+    // this.load.image('logo', 'assets/sprites/phaser3-logo.png');
+    // this.load.image('red', 'assets/particles/red.png');
 }
 
 function create() {
     this.add.image(400, 300, 'sky');
 
-    var particles = this.add.particles('red');
+    text = this.add.text(0, 0, "Press any key to start !", style);
+    text.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+    Phaser.Display.Align.In.Center(text, this.add.zone(400, 300, 800, 600));
 
-    var emitter = particles.createEmitter({
-        speed: 100,
-        scale: { start: 1, end: 0 },
-        blendMode: 'ADD'
-    });
+    keyboard = this.input.keyboard;
+    pointer = this.input.activePointer;
+    // var particles = this.add.particles('red');
 
-    var logo = this.physics.add.image(400, 100, 'logo');
+    // var emitter = particles.createEmitter({
+    //     speed: 100,
+    //     scale: { start: 1, end: 0 },
+    //     blendMode: 'ADD'
+    // });
 
-    logo.setVelocity(100, 200);
-    logo.setBounce(1, 1);
-    logo.setCollideWorldBounds(true);
+    // var logo = this.physics.add.image(400, 100, 'logo');
 
-    emitter.startFollow(logo);
+    // logo.setVelocity(100, 200);
+    // logo.setBounce(1, 1);
+    // logo.setCollideWorldBounds(true);
+
+    // emitter.startFollow(logo);
 }
 
 function update() {
+    if (pointer.isDown) {
+        text.setText('Connecting ...');
+    }
 }
