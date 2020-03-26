@@ -76,5 +76,5 @@ function handleEvent() {
 }
 
 Game.addNewPlayer = function(id, name) {
-    console.log('nique ta mère'+ name);
+    console.log('nique ta mère '+ name);
 }

@@ -2,16 +2,16 @@ var Client = {}
 Client.socket = io.connect();
 
 Client.askNewPlayer = function() {
-    Client.socket.emit('newPlayer');
+    Client.socket.emit('newplayer');
 }
 
 Client.socket.on('newplayer', function(data) {
-    Game.addNewPlayer(date.id, data.name);
+    Game.addNewPlayer(data.id, data.name);
 });
 
 Client.socket.on('allplayers', function(data) {
     console.log(data);
-    for (var i = 0; i < date.length; i++) {
-        Game.addNewPlayer(date[i].id, data[i].name);
+    for (var i = 0; i < data.length; i++) {
+        Game.addNewPlayer(data[i].id, data[i].name);
     }
 });

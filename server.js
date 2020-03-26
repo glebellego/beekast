@@ -17,39 +17,44 @@ server.listen(8080, function () {
 server.lastPlayerId = 0;
 
 io.on('connection', function (socket) {
+    console.log('Connection detected.');
     socket.on('newplayer', function () {
-        console.log('connection ...');
-        if (getAllPlayers.length < 2) {
+        console.log('Asked : newplayer.');
+        if (getAllPlayers().length < 2) {
+            console.log('(newplayer)GRANTED: ' + (2 - getAllPlayers().length) + ' room(s) left.');
             socket.player = initPlayer();
-            console.log("emit allplayer.");
             socket.emit('allplayers', getAllPlayers());
-            console.log("broadcast newplayer.");
             socket.broadcast.emit('newplayer', socket.player);
         } else {
-            console.log('No room left for new player.');
+            console.log('(newplayer)DENIED: No room left.');
             socket.emit('noroomleft');
         }
     });
 });
 
 function initPlayer() {
-    console.log('Start init player.')
-    var players = getAllPlayers();
     var result;
-    players.forEach(function (player) {
-        if (player.name !== 'PINK') {
-            result = {
-                id: server.lastPlayerId++,
-                name: 'PINK'
+    if(getAllPlayers().length > 0) {
+        getAllPlayers().forEach(function (player) {
+            if (player.name != 'PINK') {
+                result = {
+                    id: server.lastPlayerId++,
+                    name: 'PINK'
+                }
+            } else {
+                result = {
+                    id: server.lastPlayerId++,
+                    name: 'BLUE'
+                }
             }
-        } else {
-            result = {
-                id: server.lastPlayerId++,
-                name: 'BLUE'
-            }
+        });
+    } else {
+        result = {
+            id: server.lastPlayerId++,
+            name: 'PINK'
         }
-    });
-    console.log('Init : ' + result.id + ' - ' + result.name + '.');
+    }
+    console.log('Init player : ' + result.id + " - " + result.name);
     return result;
 }
 
@@ -59,6 +64,7 @@ function getAllPlayers() {
         var player = io.sockets.connected[socketID].player;
         if (player) players.push(player);
     });
+    console.log(players)
     return players;
 }
 
