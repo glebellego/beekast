@@ -16,67 +16,96 @@ server.listen(8080, function () {
 
 server.lastPlayerId = 0;
 server.time = 0;
-server.score = {};
+server.scores = [];
 
 io.on('connection', function (socket) {
     console.log('Connection detected.');
     // getplayer
     socket.on('getplayer', function () {
-        console.log('Asked : getplayer.');
+        console.log('Received : getplayer.');
         if (getPlayers().length < 2) {
             console.log('(getplayer)GRANTED');
             socket.player = initPlayer();
             console.log((2 - getPlayers().length) + ' room(s) left.')
             socket.emit('setplayer', socket.player);
-            socket.emit('setplayers', getPlayers());
-            socket.broadcast.emit('setplayers', getPlayers());
+            io.sockets.emit('setplayers', getPlayers());
             if (getPlayers().length == 2) {
                 // startgame
                 setTimeout(function () {
-                    console.log('Room full - game starting.');
-                    // server.time = getRndInteger(2, 6);
-                    server.time = 2;
-                    io.sockets.emit('startgame', time);
-                    console.log('Game start in: ' + time + ' sec');
+                    console.log('Game full - game starting.');
+                    server.time = getRndInteger(2, 6);
+                    io.sockets.emit('startgame', server.time);
+                    console.log('Game start in: ' + server.time + ' sec');
+                    server.scores = [];
                 }, 2000)
             }
         } else {
             console.log('(getplayer)DENIED: No room left.');
-            socket.emit('noroomleft');
+            // socket.emit('noroomleft');
         }
     });
-    // getwinner
-    socket.on('getwinner', function(data) {
-        console.log('Asked : getplayer.');
-        server.score[data[0]] = data[1];
-        if (Object.keys(server.score).length == 2) {
-            // resolve here ...
+    // getplayers
+    socket.on('getplayer', function () {
+        console.log('Received : getplayer.');
+        socket.emit('setplayers', getPlayers());
+        console.log('(getplayers)SUCCESS');
+    });
+    // sendscore
+    socket.on('sendscore', function (data) {
+        console.log('Received : sendscore.');
+        if (data[1] > 0) {
+            server.scores.push({ id: data[0], score: data[1] });
+            setTimeout(function () {
+                let result;
+                if (server.scores.length == 2) {
+                    result = resolve();
+                    io.sockets.emit('result', result);
+                    console.log('(sendscore)SUCCESS : broadcasting result : ' + result);
+                } else {
+                    result = data[0];
+                    io.sockets.emit('result', result);
+                    console.log('(sendscore)SUCCESS : broadcasting result : ' + result);
+                }
+            }, 1000);
         } else {
-            console.log('(getwinner)DENIED: waiting all scores.');
+            let result = data[0];
+            io.sockets.emit('loose', result);
+            console.log('(sendscore)SUCCESS: broadcasting looser : ' + result);
         }
     });
+    // disconnect
+    // socket.on('disconnect', function() {
+    //     io.sockets.emit('setplayers', getPlayers());
+    //     io.sockets.emit('deco');
+    // });
 });
+
+function disconnectAll() {
+    Object.keys(io.sockets.connected).forEach(function (socketID) {
+        io.sockets.connected[socketID].close();
+    });
+}
 
 function initPlayer() {
     var result;
     if (getPlayers().length > 0) {
         getPlayers().forEach(function (player) {
-            if (player.name != 'PINK') {
+            if (player.name != 'KIRBY') {
                 result = {
                     id: server.lastPlayerId++,
-                    name: 'PINK'
+                    name: 'KIRBY'
                 }
             } else {
                 result = {
                     id: server.lastPlayerId++,
-                    name: 'BLUE'
+                    name: 'KNIGHT'
                 }
             }
         });
     } else {
         result = {
             id: server.lastPlayerId++,
-            name: 'PINK'
+            name: 'KIRBY'
         }
     }
     console.log('Init player : ' + result.id + " - " + result.name);
@@ -96,6 +125,17 @@ function getRndInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function resolve(data) {
-    var ids
+function resolve() {
+    let a = server.scores[0];
+    let b = server.scores[1];
+    server.scores.forEach(function (i) {
+        console.log('id: ' + i.id + ', score: ' + i.score);
+    });
+    if (a.score == b.score) {       // tie
+        return -1;
+    } else if (a.score < b.score) { // a win
+        return a.id;
+    } else {                        // b win
+        return b.id;
+    }
 }
