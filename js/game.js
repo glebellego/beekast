@@ -1,12 +1,12 @@
-const status_sleep = '0';
-const status_connect = '1';
-const status_connected = '2';
-const status_wait = '3';
-const status_start = '4';
-const status_engage = '5';
-const status_resolve = '6';
-const status_result = '7';
-const status_loose = '8';
+const status_sleep = 'SLEEP';
+const status_connect = 'CONNECT';
+const status_connected = 'CONNECTED';
+const status_wait = 'WAIT';
+const status_start = 'START';
+const status_engage = 'ENGAGE';
+const status_resolve = 'RESOLVE';
+const status_result = 'RESULT';
+const status_loose = 'LOOSE';
 
 var config = {
     type: Phaser.AUTO,
@@ -57,23 +57,12 @@ function create() {
     p_atk = this.add.image(650, 450, 'p_atk');
     p_fall = this.add.image(650, 450, 'p_fall');
 
-    p_stand.visible = false;
-    p_loose.visible = false;
-    p_atk.visible = false;
-    p_fall.visible = false;
-
     b_stand = this.add.image(600, 442, 'b_stand');
     b_loose = this.add.image(600, 442, 'b_fall');
     b_atk = this.add.image(150, 442, 'b_atk');
     b_fall = this.add.image(150, 442, 'b_fall');
 
-    b_stand.visible = false;
-    b_loose.visible = false;
-    b_atk.visible = false;
-    b_fall.visible = false;
-
-    tie.visible = false;
-    excl_mark.visible = false;
+    clearAllSprites()
 
     text1 = this.add.text(0, 0, 'text 1 here', style);
     text2 = this.add.text(0, 0, 'text 2 here', style);
@@ -89,105 +78,145 @@ function create() {
 function update() {
     switch (Game.status) {
         case status_sleep:
-            text1.setText('Touch or press any key');
-            text2.setText('');
+            text1.setText('Touch or press');
+            text2.setText('any key to start !');
             break;
+
         case status_connect:
             text1.setText('Connecting ...');
+            text2.setText('');
             break;
+
         case status_connected:
             text1.setText('Connected !');
             text2.setText('Playing as ' + Game.player.name);
-            if (Game.player.name == 'KIRBY') {
-                p_stand.visible = true;
-            } else {
-                b_stand.visible = true;
-            }
+            
             Game.status = status_wait;
             break;
+
         case status_wait:
             text1.setText('Waiting for player ...');
-            if (Object.keys(Game.players).length == 2) {
-                if (Game.player.name == 'KIRBY') {
-                    b_stand.visible = true;
-                } else {
-                    p_stand.visible = true;
-                }
-            }
+            
+            displaySprites()
             break;
+
         case status_start:
             text1.setText('Game Starting');
             text2.setText('Stand ready !');
-            this.time.delayedCall((2000), cleanText, [], this);
+
+            displaySprites()
+
+            this.time.delayedCall((2000), clearTexts, [], this);
             this.time.delayedCall((Game.time * 1000), engage, [], this);
             break;
+
         case status_resolve:
             excl_mark.visible = false;
             break
-        case status_result:
-            excl_mark.visible = false;
 
+        case status_result:
             if (Game.result >= 0) {
                 text2.setText('WINNER : ' + Game.players[Game.result].name);
-                if (Game.players[Game.result].name == 'KIRBY') {
-                    p_stand.visible = false;
-                    p_atk.visible = true;
-                    b_stand.visible = false;
-                    b_fall.visible = true;
-                } else {
-                    b_stand.visible = false;
-                    b_atk.visible = true;
-                    p_stand.visible = false;
-                    p_fall.visible = true;
-                }
             } else {
                 text2.setText("TIE !!!")
-                p_stand.visible = false;
-                b_stand.visible = false;
-                tie.visible = true;
             }
+
+            displaySprites();
             break;
+
         case status_loose:
             text1.setText('TOO SOON !!!');
             text2.setText('LOOSER : ' + Game.players[Game.result].name);
-            if (Game.players[Game.result].name == 'KIRBY') {
-                p_stand.visible = false;
-                p_loose.visible = true;
-            } else {
-                b_stand.visible = false;
-                b_loose.visible = true;
-            }
+
+            displaySprites()
             break;
     }
 }
 
 function handleEvent() {
+    let params;
     switch (Game.status) {
         case status_sleep:
             if (Game.player.id != null) {
-                Client.getPlayers();
+                Client.callServer(Client.c_get_players);
                 Game.status = status_connected;
             } else {
-                Client.getPlayer();
+                Client.callServer(Client.c_new_player);
                 Game.status = status_connect;
             }
             break;
+
         case status_start:
-            Client.sendScore(Game.player.id, -1);
+            params = [Game.player.id, -1];
+            Client.callServer(Client.c_resolve_score, params);
             break;
+
         case status_engage:
+            
             let score = Game.scoring(0);
-            Client.sendScore(Game.player.id, score);
+            params = [Game.player.id, score];
+            Client.callServer(Client.c_resolve_score, params);
             Game.status = status_resolve;
             break;
+
         case status_result:
         case status_loose:
-            location.reload();
+            // location.reload();
             break;
     }
 }
 
-function cleanText() {
+function displaySprites() {
+    switch (Game.status) {
+        case status_wait:
+            p_stand.visible = (Game.player.name == 'KIRBY');
+            b_stand.visible = (Game.player.name == 'KNIGHT');
+            break;
+
+        case status_start:
+            clearAllSprites()
+            p_stand.visible = true;
+            b_stand.visible = true;
+            break;
+
+        case status_result:
+            clearAllSprites()
+            if (Game.result >= 0) {
+                p_atk.visible = (Game.players[Game.result].name == 'KIRBY');
+                b_fall.visible = (Game.players[Game.result].name == 'KIRBY');
+                b_atk.visible = (Game.players[Game.result].name == 'KNIGHT');
+                p_fall.visible = (Game.players[Game.result].name == 'KNIGHT');
+            } else {
+                tie.visible = true;
+            }
+            break;
+
+        case status_loose:
+            clearAllSprites();
+            p_stand.visible = (Game.players[Game.result].name == 'KNIGHT');
+            b_loose.visible = (Game.players[Game.result].name == 'KNIGHT');
+            b_stand.visible = (Game.players[Game.result].name == 'KIRBY');
+            p_loose.visible = (Game.players[Game.result].name == 'KIRBY');
+            break;
+    }
+}
+
+function clearAllSprites() {
+    p_stand.visible = false;
+    p_loose.visible = false;
+    p_atk.visible = false;
+    p_fall.visible = false;
+
+    b_stand.visible = false;
+    b_loose.visible = false;
+    b_atk.visible = false;
+    b_fall.visible = false;
+
+    tie.visible = false;
+    excl_mark.visible = false;
+}
+
+function clearTexts() {
     text1.setText('');
     text2.setText('');
 }
@@ -211,7 +240,7 @@ Game.updatePlayers = function (players) {
     });
 }
 
-Game.startGame = function (time) {
+Game.start = function (time) {
     Game.time = time;
     Game.status = status_start;
 }
@@ -227,7 +256,7 @@ Game.scoring = function (i) {
     }
 }
 
-Game.setResult = function (id, isLoose) {
+Game.handleResult = function (id, isLoose) {
     Game.result = id;
     if (isLoose) {
         Game.status = status_loose;
@@ -235,7 +264,3 @@ Game.setResult = function (id, isLoose) {
         Game.status = status_result;
     }
 }
-
-// Game.handleDisconnction = function () {
-//     Game.status = status_wait;
-// }

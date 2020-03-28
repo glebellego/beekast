@@ -19,40 +19,48 @@ server.time = 0;
 server.scores = [];
 
 io.on('connection', function (socket) {
-    console.log('Connection detected.');
-    // getplayer
-    socket.on('getplayer', function () {
-        console.log('Received : getplayer.');
+    console.log('Connection detected');
+
+    // new_player
+    socket.on('new_player', function () {
+        console.log('Received : new_player');
         if (getPlayers().length < 2) {
-            console.log('(getplayer)GRANTED');
             socket.player = initPlayer();
-            console.log((2 - getPlayers().length) + ' room(s) left.')
-            socket.emit('setplayer', socket.player);
-            io.sockets.emit('setplayers', getPlayers());
+            socket.emit('new_player', socket.player);
+            console.log('(new_player) SUCCESS : ' +
+                socket.player.id + ' - ' + socket.player.name);
+
+            io.sockets.emit('players', getPlayers());
+            console.log('(new_player) ' + (2 - getPlayers().length) + ' room(s) left.')
+
             if (getPlayers().length == 2) {
-                // startgame
+                // start_game
                 setTimeout(function () {
                     console.log('Game full - game starting.');
+
                     server.time = getRndInteger(2, 6);
-                    io.sockets.emit('startgame', server.time);
+                    io.sockets.emit('start_game', server.time);
                     console.log('Game start in: ' + server.time + ' sec');
+
                     server.scores = [];
                 }, 2000)
             }
         } else {
-            console.log('(getplayer)DENIED: No room left.');
+            console.log('(new_player) DENIED: No room left.');
             // socket.emit('noroomleft');
         }
     });
-    // getplayers
-    socket.on('getplayer', function () {
-        console.log('Received : getplayer.');
-        socket.emit('setplayers', getPlayers());
-        console.log('(getplayers)SUCCESS');
+
+    // get_players
+    socket.on('get_players', function () {
+        console.log('Received : get_players');
+        socket.emit('players', getPlayers());
+        console.log('(get_players) SUCCESS');
     });
-    // sendscore
-    socket.on('sendscore', function (data) {
-        console.log('Received : sendscore.');
+
+    // resolve_score
+    socket.on('resolve_score', function (data) {
+        console.log('Received : resolve_score');
         if (data[1] > 0) {
             server.scores.push({ id: data[0], score: data[1] });
             setTimeout(function () {
@@ -60,31 +68,26 @@ io.on('connection', function (socket) {
                 if (server.scores.length == 2) {
                     result = resolve();
                     io.sockets.emit('result', result);
-                    console.log('(sendscore)SUCCESS : broadcasting result : ' + result);
+                    console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
                 } else {
                     result = data[0];
                     io.sockets.emit('result', result);
-                    console.log('(sendscore)SUCCESS : broadcasting result : ' + result);
+                    console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
                 }
             }, 1000);
         } else {
             let result = data[0];
             io.sockets.emit('loose', result);
-            console.log('(sendscore)SUCCESS: broadcasting looser : ' + result);
+            console.log('(resolve_score) SUCCESS: broadcasting looser : ' + result);
         }
     });
+
     // disconnect
     // socket.on('disconnect', function() {
     //     io.sockets.emit('setplayers', getPlayers());
     //     io.sockets.emit('deco');
     // });
 });
-
-function disconnectAll() {
-    Object.keys(io.sockets.connected).forEach(function (socketID) {
-        io.sockets.connected[socketID].close();
-    });
-}
 
 function initPlayer() {
     var result;
@@ -112,6 +115,10 @@ function initPlayer() {
     return result;
 }
 
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function getPlayers() {
     var players = [];
     Object.keys(io.sockets.connected).forEach(function (socketID) {
@@ -119,10 +126,6 @@ function getPlayers() {
         if (player) players.push(player);
     });
     return players;
-}
-
-function getRndInteger(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function resolve() {
