@@ -63,18 +63,16 @@ io.on('connection', function (socket) {
         console.log('Received : resolve_score');
         if (data[1] > 0) {
             server.scores.push({ id: data[0], score: data[1] });
-            setTimeout(function () {
-                let result;
-                if (server.scores.length == 2) {
-                    result = resolve();
-                    io.sockets.emit('result', result);
-                    console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
-                } else {
-                    result = data[0];
-                    io.sockets.emit('result', result);
-                    console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
-                }
-            }, 1000);
+            let result;
+            if (server.scores.length == 2) {
+                result = resolve();
+                io.sockets.emit('result', result);
+                console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
+            } else {
+                result = data[0];
+                io.sockets.emit('result', result);
+                console.log('(resolve_score) SUCCESS : broadcasting result : ' + result);
+            }
         } else {
             let result = data[0];
             io.sockets.emit('loose', result);

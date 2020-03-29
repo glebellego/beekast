@@ -78,8 +78,8 @@ function create() {
 function update() {
     switch (Game.status) {
         case status_sleep:
-            text1.setText('Touch or press');
-            text2.setText('any key to start !');
+            text1.setText('Touch or press any key to start !');
+            text2.setText('');
             break;
 
         case status_connect:
@@ -90,13 +90,13 @@ function update() {
         case status_connected:
             text1.setText('Connected !');
             text2.setText('Playing as ' + Game.player.name);
-            
+
             Game.status = status_wait;
             break;
 
         case status_wait:
             text1.setText('Waiting for player ...');
-            
+
             displaySprites()
             break;
 
@@ -122,6 +122,8 @@ function update() {
             }
 
             displaySprites();
+
+            this.time.delayedCall((3000), restart, [], this);
             break;
 
         case status_loose:
@@ -129,6 +131,8 @@ function update() {
             text2.setText('LOOSER : ' + Game.players[Game.result].name);
 
             displaySprites()
+
+            this.time.delayedCall((3000), restart, [], this);
             break;
     }
 }
@@ -152,7 +156,7 @@ function handleEvent() {
             break;
 
         case status_engage:
-            
+
             let score = Game.scoring(0);
             params = [Game.player.id, score];
             Client.callServer(Client.c_resolve_score, params);
@@ -161,7 +165,7 @@ function handleEvent() {
 
         case status_result:
         case status_loose:
-            // location.reload();
+            location.reload();
             break;
     }
 }
@@ -227,6 +231,10 @@ function engage() {
         Game.scoring(1);
         Game.status = status_engage;
     }
+}
+
+function restart() {
+    text1.setText('Touch or press any key to reload !');
 }
 
 Game.updatePlayer = function (player) {
