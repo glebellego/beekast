@@ -2,6 +2,9 @@
 Simple 2 players Samouraï Kirby clone playable in LAN.
 Use NodeJS, express, socket.io and Phaser. (See package.json, for version number).
 
+## Requirement:
+- NodeJS
+
 ## Setup
 - Clone this repo or download and unzip.
 - Move in the beekast folder.
