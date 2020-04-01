@@ -1,4 +1,4 @@
-# beekast
+# legendary-garbanzo
 Simple 2 players Samouraï Kirby clone playable in LAN.
 Use NodeJS, express, socket.io and Phaser. (See package.json, for version number).
 
