@@ -19,7 +19,7 @@
   "homepage": "https://github.com/glebellego/beekast#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "phaser": "^3.22.0",
+    "phaser": "^3.55.2",
     "socket.io": "^2.3.0"
   }
 }
